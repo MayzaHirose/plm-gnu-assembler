@@ -41,6 +41,12 @@ enfrelatoriocliente:	.asciz	"\n************************\n* Clientes Cadastrados 
 enfrelatoriofilme:		.asciz	"\n************************\n* Filmes Cadastrados *\n************************\n"
 finallista:		.asciz	"\n\n***** FIM DA LISTA *****\n"
 
+#STRINGS CONSULTA CLIENTE E FILME
+enfeiteconsultacliente:	.asciz	"\nInsira o nome do Cliente a ser consultado:"
+enfeiteconsultafilme:	.asciz	"\nInsira o título do Filme a ser consultado:"
+clinaoencontrado:	.asciz	"\nCLIENTE NAO CADASTRADO!"
+
+
 #Registro do Cliente = Nome(40) CPF(20) RG(20) Email(30) Rua(40) Nº(10) Bairro(25) Cidade(20) Telefone(20) Assistidos(4) Locados(4) Reserva(4) Saldo(4) prox(4) = 245
 
 #Registro do Filme = Titulo(40) Ano Lançamento(15) Duração(15) Ator Principal(20) Diretor(20) Total Copias(5) Locadas(5) Disponiveis(5) Num Locaçoes(5) Av Media(5) Clientes que Locaram(4) clientes na Espera(4) prox(4) = 147
@@ -54,6 +60,7 @@ listaclientes:	.int 	NULL
 listafilmes:	.int	NULL
 tamregcliente:	.int	245
 tamregfilme:	.int	147
+nomeconsulta:	.int	40
 
 .section .text
 
@@ -309,6 +316,52 @@ registroemaiorcliente:
 	ret
 
 consultarcliente:
+	
+	pushl	$enfeiteconsultacliente
+	call	printf
+	addl	$4, %esp
+
+	pushl	$nomeconsulta
+	call	malloc
+	movl	%eax, %esi
+	addl	$4, %esp	
+
+	pushl	%esi
+
+	pushl	$limpabuf
+	call	scanf
+	addl	$4, %esp
+	call	gets
+	popl	%esi
+
+	movl	listaclientes, %edi
+	call	procuracliente
+
+	ret
+
+procuracliente:
+
+	cmpl	$NULL, %edi
+	je	naoencontrado
+
+	pushl	%edi
+	pushl	%esi
+	call	strcmp
+	popl	%esi
+	popl	%edi
+	
+	je	mostracliente
+
+	movl	241(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
+	jmp	procuracliente
+
+	ret
+
+naoencontrado:
+
+	pushl	$clinaoencontrado
+	call	printf
+	addl	$4, %esp
 
 	ret
 
@@ -336,6 +389,11 @@ verificalistaclientes:
 	ret
 
 mostracliente:
+	#tres linhas de teste
+	pushl	$enfrelatoriocliente
+	call	printf
+	addl	$4, %esp
+
 
 	pushl	$nome
 	call	printf
