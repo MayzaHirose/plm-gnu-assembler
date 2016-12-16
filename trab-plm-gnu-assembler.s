@@ -44,7 +44,8 @@ finallista:		.asciz	"\n\n***** FIM DA LISTA *****\n"
 #STRINGS CONSULTA CLIENTE E FILME
 enfeiteconsultacliente:	.asciz	"\nInsira o nome do Cliente a ser consultado:"
 enfeiteconsultafilme:	.asciz	"\nInsira o título do Filme a ser consultado:"
-clinaoencontrado:	.asciz	"\nCLIENTE NAO CADASTRADO!"
+clinaoencontrado:	.asciz	"\nCLIENTE NAO CADASTRADO!\n"
+filnaoencontrado:	.asciz	"\nFILME NAO CADASTRADO!\n"
 
 
 #Registro do Cliente = Nome(40) CPF(20) RG(20) Email(30) Rua(40) Nº(10) Bairro(25) Cidade(20) Telefone(20) Assistidos(4) Locados(4) Reserva(4) Saldo(4) prox(4) = 245
@@ -60,7 +61,7 @@ listaclientes:	.int 	NULL
 listafilmes:	.int	NULL
 tamregcliente:	.int	245
 tamregfilme:	.int	147
-nomeconsulta:	.int	40
+consulta:	.int	40
 
 .section .text
 
@@ -321,7 +322,7 @@ consultarcliente:
 	call	printf
 	addl	$4, %esp
 
-	pushl	$nomeconsulta
+	pushl	$consulta
 	call	malloc
 	movl	%eax, %esi
 	addl	$4, %esp	
@@ -342,7 +343,7 @@ consultarcliente:
 procuracliente:
 
 	cmpl	$NULL, %edi
-	je	naoencontrado
+	je	clientenaoencontrado
 
 	pushl	%edi
 	pushl	%esi
@@ -357,7 +358,7 @@ procuracliente:
 
 	ret
 
-naoencontrado:
+clientenaoencontrado:
 
 	pushl	$clinaoencontrado
 	call	printf
@@ -389,12 +390,7 @@ verificalistaclientes:
 	ret
 
 mostracliente:
-	#tres linhas de teste
-	pushl	$enfrelatoriocliente
-	call	printf
-	addl	$4, %esp
-
-
+	
 	pushl	$nome
 	call	printf
 	pushl	%edi
@@ -715,6 +711,52 @@ registroemaiorfilme:
 	ret
 
 consultarfilme:
+
+	pushl	$enfeiteconsultafilme
+	call	printf
+	addl	$4, %esp
+
+	pushl	$consulta
+	call	malloc
+	movl	%eax, %esi
+	addl	$4, %esp	
+
+	pushl	%esi
+
+	pushl	$limpabuf
+	call	scanf
+	addl	$4, %esp
+	call	gets
+	popl	%esi
+
+	movl	listafilmes, %edi
+	call	procurafilme
+
+	ret
+
+procurafilme:
+
+	cmpl	$NULL, %edi
+	je	filmenaoencontrado
+
+	pushl	%edi
+	pushl	%esi
+	call	strcmp
+	popl	%esi
+	popl	%edi
+	
+	je	mostrafilme
+
+	movl	143(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
+	jmp	procurafilme
+
+	ret
+
+filmenaoencontrado:
+
+	pushl	$filnaoencontrado
+	call	printf
+	addl	$4, %esp
 
 	ret
 
