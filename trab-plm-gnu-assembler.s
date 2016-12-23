@@ -33,8 +33,13 @@ totallocacoes:	.asciz	"Total de Locacoes:"
 avmedia:	.asciz	"Nota dos Clientes:"
 
 #STRINGS AUXILIARES
+formatodec:	.asciz	"%d"
+limpabuf:	.asciz	"%c"
 pl:		.asciz	"\n"
 pl2:		.asciz	"--------------------------"
+continuar:	.asciz	"\nTecle para continuar..."
+#sleep:		.asciz	"sleep 3"
+#read:		.asciz	"read -t 999"
 
 #STRINGS RELATORIOS
 enfrelatoriocliente:	.asciz	"\n************************\n* Clientes Cadastrados *\n************************\n"
@@ -53,8 +58,6 @@ filnaoencontrado:	.asciz	"\nFILME NAO CADASTRADO!\n"
 #Registro do Filme = Titulo(40) Ano Lançamento(15) Duração(15) Ator Principal(20) Diretor(20) Total Copias(5) Locadas(5) Disponiveis(5) Num Locaçoes(5) Av Media(5) Clientes que Locaram(4) clientes na Espera(4) prox(4) = 147
 
 opcao:		.int	0
-formatodec:	.asciz	"%d"
-limpabuf:	.asciz	"%c"
 NULL:		.int	0
 
 listaclientes:	.int 	NULL
@@ -62,6 +65,7 @@ listafilmes:	.int	NULL
 tamregcliente:	.int	245
 tamregfilme:	.int	147
 consulta:	.int	40
+teclacontinua:	.int	4
 
 .section .text
 
@@ -351,10 +355,17 @@ procuracliente:
 	popl	%esi
 	popl	%edi
 	
-	je	mostracliente
+	je	clienteencontrado
 
 	movl	241(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
 	jmp	procuracliente
+
+	ret
+
+clienteencontrado:
+	
+	call	mostracliente
+	call	tecleparacontinuar
 
 	ret
 
@@ -363,6 +374,8 @@ clientenaoencontrado:
 	pushl	$clinaoencontrado
 	call	printf
 	addl	$4, %esp
+
+	call	tecleparacontinuar
 
 	ret
 
@@ -494,6 +507,13 @@ fimlista:
 	pushl	$finallista
 	call	printf
 	addl	$4, %esp
+
+	pushl	%esi
+	pushl	$limpabuf
+	call	scanf
+	addl	$8, %esp
+
+	call	tecleparacontinuar
 	
 	ret
 
@@ -745,10 +765,17 @@ procurafilme:
 	popl	%esi
 	popl	%edi
 	
-	je	mostrafilme
+	je	filmeencontrado
 
 	movl	143(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
 	jmp	procurafilme
+
+	ret
+
+filmeencontrado:
+	
+	call	mostrafilme
+	call	tecleparacontinuar
 
 	ret
 
@@ -757,6 +784,8 @@ filmenaoencontrado:
 	pushl	$filnaoencontrado
 	call	printf
 	addl	$4, %esp
+
+	call	tecleparacontinuar
 
 	ret
 
@@ -897,6 +926,24 @@ opcaolocacao:
 
 	pushl	$menulocacao
 	call	printf
+	addl	$4, %esp
+
+	ret
+
+tecleparacontinuar:
+
+	pushl	$continuar
+	call	printf
+	addl	$4, %esp
+	
+	pushl	$teclacontinua
+	call	malloc
+	movl	%eax, %esi
+	addl	$4, %esp
+
+	pushl	%esi
+
+	call	gets
 	addl	$4, %esp
 
 	ret
