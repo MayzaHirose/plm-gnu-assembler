@@ -4,7 +4,7 @@
 
 #STRINGS MENU
 menu:		.asciz	"\n*****************************\n* Gerenciamento de Locadora *\n*****************************\n"
-menuopcoes:	.asciz	"\nEscolha uma opcao:\n<1>Cliente\n<2>Filmes\n<3>Locação\n<4>Sair\n\n"
+menuopcoes:	.asciz	"\nEscolha uma opcao:\n1. Cliente\n2. Filmes\n3. Locação\n4. Sair\n\n"
 submenu:	.asciz	"\n*****************\n* O que deseja? *\n*****************\n"
 submenuopcoes:	.asciz	"\n<1>Cadastrar\n<2>Consultar\n<3>Relatório\n<4>Voltar\n\n"
 menulocacao:	.asciz	"\n******* EM CONSTRUÇÃO *******\n\n"
@@ -77,19 +77,20 @@ _start:
 
 telainicial:
 
+	#Enfeite Sistema
 	pushl	$menu
 	call	printf
 	addl	$4, %esp
 
+	#Recebe opção
 	pushl	$menuopcoes
 	call	printf
-
 	pushl	$opcao
 	pushl	$formatodec
 	call	scanf
-
 	addl	$12, %esp
 
+	#Verifica opção
 	movl	opcao, %ebx
 	call	redirecionaopcao
 	cmpl	$4, %ebx
@@ -99,29 +100,31 @@ telainicial:
 redirecionaopcao:
 
 	cmpl	$1, %ebx
-	je	opcaocliente
+	je	menucliente
 
 	cmpl	$2, %ebx
-	je	opcaofilme
+	je	menufilme
 
 	cmpl	$3, %ebx
 	je	opcaolocacao
-
+	
 	ret
 
-opcaocliente:
+menucliente:
 
+	#Enfeite menu cliente
 	pushl	$submenu
 	call	printf
+
+	#Recebe opção
 	pushl	$submenuopcoes
 	call	printf
-
 	pushl	$opcao
 	pushl	$formatodec
 	call	scanf
-
 	addl	$16, %esp
 
+	#Verifica opção
 	movl	opcao, %ebx
 	
 	cmpl	$1, %ebx
@@ -140,6 +143,7 @@ opcaocliente:
 
 cadastrocliente:
 
+	#Aloca espaço na memória para o novo registro
 	pushl	$tamregcliente
 	call	malloc
 	movl	%eax, %edi
@@ -148,13 +152,20 @@ cadastrocliente:
 	call	pegadadoscliente
 	movl	listaclientes, %esi
 
+	#Verifica se a lista está vazia. Se estiver, insere direto
 	cmpl	$NULL, %esi
 	je	insereprimeirocliente
 
+	#Se não estiver vazia, procura posição
 	call	achaposicaonalistaclientes
 
+	#A função acima retornará NULL se o novo registro tiver que ser inserido na frente de todos
+	#Caso retorne outro valor, o registro sera "encaixado" na lista nas tres ultimas instruções
 	cmpl	$NULL, %esi
 	je	insereregistroiniciocliente
+
+	#"Encaixa" o novo registro caso o valor retornado pelo "achaposiçãolistaclientes" for diferente de NULO
+	#Faz o novo registro apontar para o registro apontado pelo retornado; e o registro retornado apontar para o novo registro
 	movl	241(%esi), %ecx
 	movl	%ecx, 241(%edi)
 	movl	%edi, 241(%esi)
@@ -253,7 +264,6 @@ pegadadoscliente:
 	addl	$4, %edi
 
 	movl	$NULL, (%edi);
-	#addl	$4, %edi
 
 	subl	$241, %edi
 
@@ -267,6 +277,7 @@ insereprimeirocliente:
 
 achaposicaonalistaclientes:
 	
+	#Compara a primeira string da lista com a do novo registro
 	movl	listaclientes, %esi
 	pushl	%edi
 	pushl	%esi
@@ -274,7 +285,10 @@ achaposicaonalistaclientes:
 	popl	%esi
 	popl	%edi
 
+	#se a string da lista for menor que a do novo registro, continua procurando a posição
 	jl	procuraposicaomeioclientes
+
+	#se não ela retorna NULL (insere no início da lista)
 	movl	$NULL, %esi
 	
 	ret
@@ -289,7 +303,10 @@ insereregistroiniciocliente:
 
 procuraposicaomeioclientes:	
 	
+	#Recupera o registro apontado pelo reg anterior. 
 	movl	241(%esi), %ecx
+
+	#Se NULL, é o fim da lista. Se não, continua percorrendo a lista
 	cmpl	$NULL, %ecx
 	jne	existeregistroaindaclientes
 
@@ -315,7 +332,6 @@ existeregistroaindaclientes:
 registroemaiorcliente:
 
 	addl	$4, %esp
-	#movl	%ecx, %esi
 	jmp	procuraposicaomeioclientes
 
 	ret
@@ -326,6 +342,7 @@ consultarcliente:
 	call	printf
 	addl	$4, %esp
 
+	#Aloca espaço na memória para guardar o nome do cliente a ser consultado
 	pushl	$consulta
 	call	malloc
 	movl	%eax, %esi
@@ -333,6 +350,7 @@ consultarcliente:
 
 	pushl	%esi
 
+	#limpa buffer e captura o nome
 	pushl	$limpabuf
 	call	scanf
 	addl	$4, %esp
@@ -346,17 +364,21 @@ consultarcliente:
 
 procuracliente:
 
+	#compara o registro atual com NULL. Se NULL, o cliente não foi encontrado
 	cmpl	$NULL, %edi
 	je	clientenaoencontrado
 
+	#Compara o registro atual com o nome procurado
 	pushl	%edi
 	pushl	%esi
 	call	strcmp
 	popl	%esi
 	popl	%edi
 	
+	#Se for igual, cliente foi encontrado
 	je	clienteencontrado
 
+	#Se não, recupera o próximo registro da lista de cliente e repete a procura
 	movl	241(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
 	jmp	procuracliente
 
@@ -365,6 +387,7 @@ procuracliente:
 clienteencontrado:
 	
 	call	mostracliente
+
 	call	tecleparacontinuar
 
 	ret
@@ -396,6 +419,7 @@ verificalistaclientes:
 	cmpl	$NULL, %edi
 	je	fimlista
 
+	#Mostra o cliente atual e recupera o próximo da lista
 	call	mostracliente
 	movl	241(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
 	jmp	verificalistaclientes
@@ -517,19 +541,21 @@ fimlista:
 	
 	ret
 
-opcaofilme:
+menufilme:
 
+	#Enfeite menu cliente
 	pushl	$submenu
 	call	printf
+
+	#Recebe opção
 	pushl	$submenuopcoes
 	call	printf
-
 	pushl	$opcao
 	pushl	$formatodec
 	call	scanf
-
 	addl	$16, %esp
 
+	#Verifica opção
 	movl	opcao, %ebx
 	
 	cmpl	$1, %ebx
@@ -548,6 +574,7 @@ opcaofilme:
 
 cadastrofilme:
 	
+	#Aloca espaço na memória para o novo registro
 	pushl	$tamregfilme
 	call	malloc
 	movl	%eax, %edi
@@ -556,13 +583,20 @@ cadastrofilme:
 	call	pegadadosfilme
 	movl	listafilmes, %esi
 
+	#Verifica se a lista está vazia. Se estiver, insere direto
 	cmpl	$NULL, %esi
 	je	insereprimeirofilme
 
+	#Se não estiver vazia, procura posição
 	call	achaposicaonalistafilmes
 
+	#A função acima retornará NULL se o novo registro tiver que ser inserido na frente de todos
+	#Caso retorne outro valor, o registro sera "encaixado" na lista nas tres ultimas instruções
 	cmpl	$NULL, %esi
 	je	insereregistroiniciofilme
+
+	#"Encaixa" o novo registro caso o valor retornado pelo "achaposiçãolistafilmes" for diferente de NULO
+	#Faz o novo registro apontar para o registro apontado pelo retornado; e o registro retornado apontar para o novo registro
 	movl	143(%esi), %ecx
 	movl	%ecx, 143(%edi)
 	movl	%edi, 143(%esi)
@@ -677,6 +711,7 @@ insereprimeirofilme:
 
 achaposicaonalistafilmes:
 	
+	#Compara a primeira string da lista com a do novo registro
 	movl	listafilmes, %esi
 	pushl	%edi
 	pushl	%esi
@@ -684,7 +719,10 @@ achaposicaonalistafilmes:
 	popl	%esi
 	popl	%edi
 
+	#se a string da lista for menor que a do novo registro, continua procurando a posição
 	jl	procuraposicaomeiofilmes
+
+	#se não ela retorna NULL (insere no início da lista)
 	movl	$NULL, %esi
 	
 	ret
@@ -699,7 +737,10 @@ insereregistroiniciofilme:
 
 procuraposicaomeiofilmes:	
 	
+	#Recupera o registro apontado pelo reg anterior.
 	movl	143(%esi), %ecx
+
+	#Se NULL, é o fim da lista. Se não, continua percorrendo a lista
 	cmpl	$NULL, %ecx
 	jne	existeregistroaindafilmes
 
@@ -736,6 +777,7 @@ consultarfilme:
 	call	printf
 	addl	$4, %esp
 
+	#Aloca espaço na memória para guardar o nome do cliente a ser consultado
 	pushl	$consulta
 	call	malloc
 	movl	%eax, %esi
@@ -743,6 +785,7 @@ consultarfilme:
 
 	pushl	%esi
 
+	#limpa buffer e captura o titulo
 	pushl	$limpabuf
 	call	scanf
 	addl	$4, %esp
@@ -756,17 +799,21 @@ consultarfilme:
 
 procurafilme:
 
+	#compara o registro atual com NULL. Se NULL, o cliente não foi encontrado
 	cmpl	$NULL, %edi
 	je	filmenaoencontrado
 
+	#Compara o registro atual com o titulo procurado
 	pushl	%edi
 	pushl	%esi
 	call	strcmp
 	popl	%esi
 	popl	%edi
 	
+	#Se for igual, filme foi encontrado
 	je	filmeencontrado
 
+	#Se não, recupera o próximo registro da lista de filmes e repete a procura
 	movl	143(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
 	jmp	procurafilme
 
@@ -806,6 +853,7 @@ verificalistafilmes:
 	cmpl	$NULL, %edi
 	je	fimlista
 
+	#Mostra o filme atual e recupera o próximo da lista
 	call	mostrafilme
 	movl	143(%edi), %edi #pega o valor apontado pela posicao 143 do %edi e passa pro %edi
 	jmp	verificalistafilmes
@@ -932,6 +980,7 @@ opcaolocacao:
 
 tecleparacontinuar:
 
+	#Função para enfeite e organização do sistema
 	pushl	$continuar
 	call	printf
 	addl	$4, %esp
