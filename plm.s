@@ -34,6 +34,14 @@ disponiveis:	.asciz	"Copias disponiveis:"
 totallocacoes:	.asciz	"Total de Locacoes:"
 avmedia:	.asciz	"Nota dos Clientes:"
 
+#LOCACAO
+pedecliente:	.asciz	"Nome do Cliente:"
+peganomecli:	.space	40
+pedefilme:	.asciz	"Nome do Filme:"
+peganomefil:	.space	40
+saldodevedor:	.asciz	"Seu saldo devedor e de R$ %.2lf\n"
+
+
 #STRINGS AUXILIARES
 formatodec:	.asciz	"%d"
 limpabuf:	.asciz	"%c"
@@ -104,24 +112,30 @@ clinaoencontrado:	.asciz	"\nCLIENTE NAO CADASTRADO!\n"
 filnaoencontrado:	.asciz	"\nFILME NAO CADASTRADO!\n"
 
 
-#Registro do Cliente = Nome(40) CPF(20) RG(20) Email(30) Rua(40) Nº(10) Bairro(25) Cidade(20) Telefone(20) Assistidos(4) Locados(4) Saldo(4) prox(4) = 241 Reserva(4)
+#Registro do Cliente = Nome(40) CPF(20) RG(20) Email(30) Rua(40) Nº(10) Bairro(25) Cidade(20) Telefone(20) Saldo(8) prox(4) = 237 Reserva(4) Assistidos(4) Locados(4)
 
-#Registro do Filme = Titulo(40) Ano Lançamento(15) Duração(15) Ator Principal(20) Diretor(20) Total Copias(5) Locadas(5) Disponiveis(5) Num Locaçoes(5) Av Media(5) Clientes que Locaram(4) prox(4) = 143 clientes na Espera(4)
+#Registro do Filme = Titulo(40) Ano Lançamento(15) Duração(15) Ator Principal(20) Diretor(20) Total Copias(5) Locadas(5) Disponiveis(5) Num Locaçoes(5) Av Media(5) prox(4) = 139 clientes na Espera(4) Clientes que Locaram(4)
+
+#Filmes assistidos = Cliente(40) Filme(40) Nota(4)
+
+#Filmes a devolver = Cliente(40) Filme(40)
 
 #Nova Locacao = CopiasDisponiveis
 
 opcao:		.int	0
 NULL:		.int	0
 
-listaclientes:	.int 	NULL
-listafilmes:	.int	NULL
-tamregcliente:	.int	241
-tamregfilme:	.int	143
-consulta:	.int	40
-teclacontinua:	.int	4
+listaclientes:		.int 	NULL
+listafilmes:		.int	NULL
+listafilmesassistidos:	.int	NULL
+listafilmesadevolver:	.int	NULL
+tamregcliente:		.int	237
+tamregfilme:		.int	139
+consulta:		.int	40
+teclacontinua:		.int	4
 
-todosclientes:	.space	2410 #(10 clientes)
-todosfilmes:	.space	1430 #(10 filmes)
+todosclientes:	.space	2370 #(10 clientes)
+todosfilmes:	.space	1390 #(10 filmes)
 teste:		.asciz 	"TAM = %d\n\n"
 
 .section .text
@@ -238,9 +252,9 @@ cadastrocliente:
 
 	#"Encaixa" o novo registro caso o valor retornado pelo "achaposiçãolistaclientes" for diferente de NULO
 	#Faz o novo registro apontar para o registro apontado pelo retornado; e o registro retornado apontar para o novo registro
-	movl	237(%esi), %ecx
-	movl	%ecx, 237(%edi)
-	movl	%edi, 237(%esi)
+	movl	233(%esi), %ecx
+	movl	%ecx, 233(%edi)
+	movl	%edi, 233(%esi)
 
 	call	abreArqS
 	call	gravaReg
@@ -328,17 +342,11 @@ pegadadoscliente:
 	addl	$20, %edi
 
 	movl	$NULL, (%edi);
-	addl	$4, %edi
-
-	movl	$NULL, (%edi);
-	addl	$4, %edi
-
-	movl	$NULL, (%edi);
-	addl	$4, %edi
+	addl	$8, %edi
 
 	movl	$NULL, (%edi);
 
-	subl	$237, %edi
+	subl	$233, %edi
 
 	ret
 
@@ -373,7 +381,7 @@ achaposicaonalistaclientes:
 insereregistroiniciocliente:
 
 	movl	listaclientes, %esi
-	movl	%esi, 237(%edi) #passa o endereço apontado pela lista para o final do registro a ser adicionado. 
+	movl	%esi, 233(%edi) #passa o endereço apontado pela lista para o final do registro a ser adicionado. 
 	movl	%edi, listaclientes
 
 	call	abreArqS
@@ -385,7 +393,7 @@ insereregistroiniciocliente:
 procuraposicaomeioclientes:	
 	
 	#Recupera o registro apontado pelo reg anterior. 
-	movl	237(%esi), %ecx
+	movl	233(%esi), %ecx
 
 	#Se NULL, é o fim da lista. Se não, continua percorrendo a lista
 	cmpl	$NULL, %ecx
@@ -419,7 +427,7 @@ registroemaiorcliente:
 
 consultarcliente:	
 
-	jmp 	mostraArq
+	#jmp 	mostraArq
 	
 	pushl	$enfeiteconsultacliente
 	call	printf
@@ -462,7 +470,7 @@ procuracliente:
 	je	clienteencontrado
 
 	#Se não, recupera o próximo registro da lista de cliente e repete a procura
-	movl	237(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
+	movl	233(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
 	jmp	procuracliente
 
 	ret
@@ -504,7 +512,7 @@ verificalistaclientes:
 
 	#Mostra o cliente atual e recupera o próximo da lista
 	call	mostracliente
-	movl	237(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
+	movl	233(%edi), %edi #pega o valor apontado pela posicao 233 do %edi e passa pro %edi
 	jmp	verificalistaclientes
 
 	ret
@@ -680,9 +688,9 @@ cadastrofilme:
 
 	#"Encaixa" o novo registro caso o valor retornado pelo "achaposiçãolistafilmes" for diferente de NULO
 	#Faz o novo registro apontar para o registro apontado pelo retornado; e o registro retornado apontar para o novo registro
-	movl	139(%esi), %ecx
-	movl	%ecx, 139(%edi)
-	movl	%edi, 139(%esi)
+	movl	135(%esi), %ecx
+	movl	%ecx, 135(%edi)
+	movl	%edi, 135(%esi)
 	
 	ret
 
@@ -774,11 +782,8 @@ pegadadosfilme:
 	addl	$5, %edi
 
 	movl	$NULL, (%edi);
-	addl	$4, %edi
 
-	movl	$NULL, (%edi);
-
-	subl	$139, %edi
+	subl	$135, %edi
 
 	ret
 
@@ -809,7 +814,7 @@ achaposicaonalistafilmes:
 insereregistroiniciofilme:
 
 	movl	listafilmes, %esi
-	movl	%esi, 139(%edi) #passa o endereço apontado pela lista para o final do registro a ser adicionado. 
+	movl	%esi, 135(%edi) #passa o endereço apontado pela lista para o final do registro a ser adicionado. 
 	movl	%edi, listafilmes
 
 	ret
@@ -817,7 +822,7 @@ insereregistroiniciofilme:
 procuraposicaomeiofilmes:	
 	
 	#Recupera o registro apontado pelo reg anterior.
-	movl	139(%esi), %ecx
+	movl	135(%esi), %ecx
 
 	#Se NULL, é o fim da lista. Se não, continua percorrendo a lista
 	cmpl	$NULL, %ecx
@@ -893,7 +898,7 @@ procurafilme:
 	je	filmeencontrado
 
 	#Se não, recupera o próximo registro da lista de filmes e repete a procura
-	movl	139(%edi), %edi #pega o valor apontado pela posicao 139 do %edi e passa pro %edi
+	movl	135(%edi), %edi #pega o valor apontado pela posicao 139 do %edi e passa pro %edi
 	jmp	procurafilme
 
 	ret
@@ -934,7 +939,7 @@ verificalistafilmes:
 
 	#Mostra o filme atual e recupera o próximo da lista
 	call	mostrafilme
-	movl	139(%edi), %edi #pega o valor apontado pela posicao 143 do %edi e passa pro %edi
+	movl	135(%edi), %edi #pega o valor apontado pela posicao 143 do %edi e passa pro %edi
 	jmp	verificalistafilmes
 
 	ret
@@ -1054,6 +1059,21 @@ menulocacao:
 	#Enfeite menu 
 	pushl	$submenu
 	call	printf
+	
+	pushl	$lixo
+	call	gets	
+
+	pushl	$pedecliente
+	call	printf
+	pushl	$peganomecli
+	call	gets
+	addl	$8, %esp
+
+	jmp	verificacliexiste
+
+	ret
+
+menulocacao2:
 
 	#Recebe opção
 	pushl	$submenulocacao
@@ -1077,19 +1097,68 @@ menulocacao:
 
 	ret
 
-novalocacao:
+verificacliexiste:
+	movl	listaclientes, %edi
+	movl	peganomecli, %esi
+	jmp	procuracli
 
-	pushl	$submenulocacao
+procuracli:
+
+	#compara o registro atual com NULL. Se NULL, o cliente não foi encontrado
+	cmpl	$NULL, %edi
+	je	clienaoencontrado
+
+	#Compara o registro atual com o nome procurado
+	pushl	%edi
+	pushl	%esi
+	call	strcmp
+	popl	%esi
+	popl	%edi
+	
+	#Se for igual, cliente foi encontrado
+	je	cliencontrado
+
+	#Se não, recupera o próximo registro da lista de cliente e repete a procura
+	movl	233(%edi), %edi #pega o valor apontado pela posicao 241 do %edi e passa pro %edi
+	jmp	procuracli
+
+	ret
+
+cliencontrado:
+
+	jmp menulocacao2
+
+	ret
+
+clienaoencontrado:
+
+	pushl	$clinaoencontrado
 	call	printf
 	addl	$4, %esp
+
+	call	tecleparacontinuar
+	jmp 	telainicial
+
+	ret
+
+
+novalocacao:
+
+	pushl	$pedefilme
+	call	printf
+	pushl	$peganomefil
+	call	gets
+	addl	$8, %esp
 
 	ret
 
 devolucao:
 
-	pushl	$submenulocacao
+	pushl	$pedefilme
 	call	printf
-	addl	$4, %esp
+	pushl	$peganomefil
+	call	gets
+	addl	$8, %esp
 
 	ret
 
@@ -1125,7 +1194,8 @@ abreArqS:
 	movl	$nomeArq, %ebx
 	movl 	O_WRONLY, %ecx
 	orl	O_CREAT, %ecx
-	orl	O_APPEND, %ecx
+	orl	O_TRUNC, %ecx
+	#orl	O_APPEND, %ecx
 	movl	S_IRUSR, %edx
 	orl	S_IWUSR, %edx
 	int  	$0x80
