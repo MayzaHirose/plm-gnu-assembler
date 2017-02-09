@@ -122,6 +122,7 @@ teclacontinua:	.int	4
 
 todosclientes:	.space	2410 #(10 clientes)
 todosfilmes:	.space	1430 #(10 filmes)
+teste:		.asciz 	"TAM = %d\n\n"
 
 .section .text
 
@@ -374,6 +375,10 @@ insereregistroiniciocliente:
 	movl	listaclientes, %esi
 	movl	%esi, 237(%edi) #passa o endereço apontado pela lista para o final do registro a ser adicionado. 
 	movl	%edi, listaclientes
+
+	call	abreArqS
+	call	gravaReg
+	call	fechaArq
 
 	ret
 
@@ -1131,7 +1136,18 @@ gravaReg:
 
 	movl	listaclientes, %edi
 
-	#call	contaregistros
+	movl	$241, tamListaClientes
+	pushl	tamListaClientes
+	pushl	$teste
+	call	printf
+	addl	$8, %esp
+
+	call	contaregistros
+
+	pushl	tamListaClientes
+	pushl	$teste
+	call	printf
+	addl	$8, %esp
 
 	movl 	SYS_WRITE, %eax
 	movl	descritor, %ebx	# recupera o descritor
@@ -1141,7 +1157,6 @@ gravaReg:
 	ret	
 
 contaregistros:
-	movl	listaclientes, %edi
 	movl	237(%edi), %esi
 
 	cmpl	$NULL, %esi
@@ -1149,13 +1164,17 @@ contaregistros:
 
 	ret
 
-somatamlista:
-	pushl	$continuar
-	call	printf
-	addl	$4, %esp
+contaregistros2:
+	movl	237(%esi), %esi
 
+	cmpl	$NULL, %esi
+	jne	somatamlista
+
+	ret
+
+somatamlista:
 	addl	$241, tamListaClientes
-	jmp	contaregistros
+	jmp	contaregistros2
 
 	ret
 
@@ -1163,7 +1182,6 @@ mostraArq:
 	call	abreArqE
 	call	mostraRegs
 	call	fechaArq
-	call	sair
 	ret
 
 abreArqE:
